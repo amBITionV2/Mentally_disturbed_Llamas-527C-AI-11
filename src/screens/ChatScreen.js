@@ -4,6 +4,7 @@ import { Svg, Path } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import { WebView } from 'react-native-webview';
 import ChatBubble from '../components/ChatBubble';
+import DropdownMenu from '../components/DropdownMenu';
 
 const ChatScreen = () => {
   const navigation = useNavigation();
@@ -204,6 +205,7 @@ const ChatScreen = () => {
           </TouchableOpacity>
         </View>
       </View>
+      <DropdownMenu isVisible={showDropdown} onClose={() => setShowDropdown(false)} />
     </SafeAreaView>
   );
 };
