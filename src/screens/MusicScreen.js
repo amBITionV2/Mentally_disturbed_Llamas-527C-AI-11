@@ -6,6 +6,7 @@ import sleep from '../../assets/sleep.png';
 import meditation from '../../assets/meditation.png';
 import relax from '../../assets/relax.png';
 import headphone from '../../assets/headphone.png';
+
 const MusicThemesScreen = () => {
   const navigation = useNavigation();
   const isDarkMode = useColorScheme() === 'dark';
@@ -16,7 +17,8 @@ const MusicThemesScreen = () => {
       title: 'Sleep',
       description: 'Peaceful sounds for deep rest',
       gradient: ['#2a60ea', '#6b9aff'],
-      image: require('../../assets/sleep.png'),
+      image: sleep,
+      category: 'sleep',
     },
     {
       id: 2,
@@ -24,6 +26,7 @@ const MusicThemesScreen = () => {
       description: 'Calm your mind and find peace',
       gradient: ['#8b5cf6', '#c084fc'],
       image: meditation,
+      category: 'meditation',
     },
     {
       id: 3,
@@ -31,6 +34,7 @@ const MusicThemesScreen = () => {
       description: 'Unwind and let go of stress',
       gradient: ['#10b981', '#34d399'],
       image: relax,
+      category: 'relax',
     },
     {
       id: 4,
@@ -38,6 +42,7 @@ const MusicThemesScreen = () => {
       description: 'Enhance concentration and productivity',
       gradient: ['#f59e0b', '#fbbf24'],
       image: headphone,
+      category: 'focus',
     },
     {
       id: 5,
@@ -45,6 +50,7 @@ const MusicThemesScreen = () => {
       description: 'Stay motivated and energized',
       gradient: ['#ef4444', '#fb7185'],
       image: 'https://images.unsplash.com/photo-1497032628192-86f99bcd76bc?w=400',
+      category: 'work',
     },
     {
       id: 6,
@@ -52,6 +58,7 @@ const MusicThemesScreen = () => {
       description: 'Connect with natural sounds',
       gradient: ['#06b6d4', '#22d3ee'],
       image: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400',
+      category: 'nature',
     },
     {
       id: 7,
@@ -59,6 +66,7 @@ const MusicThemesScreen = () => {
       description: 'Harmonize body and mind',
       gradient: ['#ec4899', '#f472b6'],
       image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400',
+      category: 'yoga',
     },
     {
       id: 8,
@@ -66,12 +74,13 @@ const MusicThemesScreen = () => {
       description: 'Boost learning and retention',
       gradient: ['#6366f1', '#818cf8'],
       image: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=400',
+      category: 'study',
     },
   ];
 
   const handleThemePress = (theme) => {
-    // Navigate to music player screen with theme data
-    navigation.navigate('MusicPlayer', { theme });
+    // Navigate to Song page with theme data
+    navigation.navigate('Song', { theme });
   };
 
   return (
@@ -137,28 +146,26 @@ const MusicThemesScreen = () => {
                 </Text>
                 
                 {/* Play Icon */}
-                <View style={[styles.playIconContainer, { backgroundColor: theme.gradient[0] }]}>
                 <TouchableOpacity
                   style={[styles.playIconContainer, { backgroundColor: theme.gradient[0] }]}
-                  onPress={() => navigation.navigate('Song', { theme })}
+                  onPress={() => handleThemePress(theme)}
+                  activeOpacity={0.7}
                 >
                   <Svg width={20} height={20} viewBox="0 0 24 24" fill="#ffffff">
                     <Path d="M8,5.14V19.14L19,12.14L8,5.14Z" />
                   </Svg>
-                  </TouchableOpacity>
-                </View>
+                </TouchableOpacity>
               </View>
 
               {/* Image Section */}
               <View style={styles.themeImageContainer}>
-              <ImageBackground
-  source={theme.image}
-  style={styles.themeImage}
-  imageStyle={styles.themeImageStyle}
->
-  <View style={[styles.imageOverlay, { backgroundColor: theme.gradient[0] }]} />
-</ImageBackground>
-
+                <ImageBackground
+                  source={theme.image}
+                  style={styles.themeImage}
+                  imageStyle={styles.themeImageStyle}
+                >
+                  <View style={[styles.imageOverlay, { backgroundColor: theme.gradient[0] }]} />
+                </ImageBackground>
               </View>
             </View>
           </TouchableOpacity>
@@ -233,7 +240,7 @@ const styles = StyleSheet.create({
   },
   // Theme Card Styles
   themeCardWrapper: {
-    marginBottom: 20,       // spacing between cards
+    marginBottom: 20,
     position: 'relative',
     width: '100%',
     height: 150,
@@ -254,7 +261,6 @@ const styles = StyleSheet.create({
     padding: 16,
     height: '100%',
     width: '100%',
-    
     zIndex: 2, 
   },
   themeCardDark: {
