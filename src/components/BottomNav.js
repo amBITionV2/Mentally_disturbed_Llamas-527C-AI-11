@@ -56,6 +56,15 @@ const BottomNav = ({ activeTab = 'Home' }) => {
       ),
       label: 'Profile',
     },
+    {
+      name: 'Relax',
+      icon: (
+        <Svg width={24} height={24} viewBox="0 0 256 256" fill={activeTab === 'Music' ? '#13ecec' : 'rgba(255, 255, 255, 0.6)'}>
+      <Path d="M200 32v136a40 40 0 1 1-24-37.32V72h-40v96a40 40 0 1 1-24-37.32V32z" />
+    </Svg>
+      ),
+      label: 'Relax',
+    },
   ];
 
   return (
