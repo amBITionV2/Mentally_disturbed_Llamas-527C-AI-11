@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View,Image, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { LinearGradient } from 'expo-linear-gradient';
-
+import {Video} from 'expo-av';
 import StatCard from '../components/StatCard';
 
 const HomeScreen = ({ navigation }) => {
@@ -60,17 +60,27 @@ const handleGuidedBreathing = () => {
               colors={['rgba(42,96,234,0.1)', 'rgba(42,96,234,0.2)']} // bg-primary/10 dark:bg-primary/20
               style={styles.moodTrackerInner}
             >
-              <View style={styles.moodCircleContainer}>
-                <View style={styles.outerCircle} />
-                <View style={styles.innerCircle} />
-                <View style={styles.centerCircle}>
-                  <Icon name="mood" size={64} color="#ffffff" /> {/* Closest to sentiment_very_satisfied */}
-                </View>
-                <View style={styles.dotTop} />
-                <View style={styles.dotBottom} />
-                <View style={styles.dotLeft} />
-                <View style={styles.dotRight} />
-              </View>
+              
+              <View style={{ 
+  marginTop: 20, 
+  alignItems: 'center' 
+}}>
+  <View 
+    style={{
+      width: 250,
+      height: 250,
+      borderRadius: 125,   // half of width/height
+      overflow: 'hidden',  // ensures GIF doesn’t overflow the circle
+    }}
+  >
+    <Image
+      source={require('../../assets/home.gif')}
+      style={{ width: '100%', height: '100%' }}
+    />
+  </View>
+</View>
+
+
               <Text style={styles.moodTitle}>Mood Tracker</Text>
               <Text style={styles.moodText}>Track your mood to gain insights into your emotional well-being.</Text>
             </LinearGradient>
