@@ -1,0 +1,41 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+ENV/
+.venv/
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDEs and editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+*.log
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# FAISS index (optional, if you want to rebuild locally)
+faiss_index/
+
+# Python egg files
+*.egg
+*.egg-info/
+dist/
+build/
+
+# dotenv files (if you have secrets)
+.env
+__init__.py
+__pycache__

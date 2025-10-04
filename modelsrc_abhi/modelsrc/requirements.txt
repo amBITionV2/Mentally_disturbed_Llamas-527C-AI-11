@@ -1,0 +1,28 @@
+# Core RAG
+langchain
+langchain-community
+langchain-core
+langchain-huggingface
+langchain-groq
+faiss-cpu
+sentence-transformers
+transformers
+
+# Utilities
+numpy
+pandas
+
+# Text-to-Speech
+simpleaudio
+SpeechRecognition
+pyttsx3
+pyaudio
+
+# Env & helpers
+python-dotenv
+tqdm
+requests
+
+# API
+fastapi
+uvicorn[standard]
