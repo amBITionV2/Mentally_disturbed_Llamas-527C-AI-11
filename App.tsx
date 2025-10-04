@@ -12,7 +12,8 @@ import ProfileScreen from './src/screens/ProfileScreen';
 import MoodCheckScreen from './src/screens/MoodCheckScreen';
 import WellnessScreen from './src/screens/WellnessScree';
 import BottomNav from './src/components/BottomNav';
-
+import MusicThemesScreen from './src/screens/MusicScreen';
+import TimerSliderScreen from './src/screens/SongPage';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -60,6 +61,16 @@ function App() {
         <Stack.Screen 
           name="Wellness" 
           component={WellnessScreen} 
+          options={{ headerShown: false }} 
+        />
+        <Stack.Screen 
+          name="Relax" 
+          component={MusicThemesScreen} 
+          options={{ headerShown: false }} 
+        />
+        <Stack.Screen 
+          name="Song" 
+          component={TimerSliderScreen} 
           options={{ headerShown: false }} 
         />
       </Stack.Navigator>
