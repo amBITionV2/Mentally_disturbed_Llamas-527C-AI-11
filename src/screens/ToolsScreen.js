@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, useColorScheme, Alert } from 'react-native';
 import { Svg, Path } from 'react-native-svg';
 import BottomNav from '../components/BottomNav';
-import CharacterAvatar from '../components/CharacterAvatar';
+//import CharacterAvatar from '../components/CharacterAvatar';
 
 const ToolsScreen = ({ navigation }) => {
   const isDarkMode = useColorScheme() === 'dark';
@@ -43,7 +43,7 @@ const ToolsScreen = ({ navigation }) => {
       <ScrollView style={styles.scrollContainer}>
         <View style={styles.header}>
           <View style={styles.headerContent}>
-            <CharacterAvatar type="focus" size={50} color="#13ecec" />
+          
             <View style={styles.headerText}>
               <Text style={[styles.headerTitle, isDarkMode && styles.headerTitleDark]}>Tools</Text>
               <Text style={[styles.headerSubtitle, isDarkMode && styles.headerSubtitleDark]}>

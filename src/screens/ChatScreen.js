@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, ImageBackground, SafeAreaView, useColorScheme, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, useColorScheme, Alert, Animated } from 'react-native';
 import { Svg, Path } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
+import { WebView } from 'react-native-webview';
 import ChatBubble from '../components/ChatBubble';
-import DropdownMenu from '../components/DropdownMenu';
 
 const ChatScreen = () => {
   const navigation = useNavigation();
@@ -31,10 +31,29 @@ const ChatScreen = () => {
   const [inputText, setInputText] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const scrollViewRef = useRef();
+  const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     scrollViewRef.current?.scrollToEnd({ animated: true });
   }, [messages]);
+
+  useEffect(() => {
+    // Pulse animation for avatar container
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.02,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
 
   const handleSend = () => {
     if (!inputText.trim()) return;
@@ -42,13 +61,13 @@ const ChatScreen = () => {
       id: messages.length + 1,
       sender: 'You',
       text: inputText,
-      avatar: messages.find(m => m.sender === 'You').avatar,
+      avatar: messages.find(m => m.sender === 'You')?.avatar || 'https://your-user-avatar.jpg',
     };
     const ranchoResponse = {
       id: messages.length + 2,
       sender: 'Rancho',
       text: "Thanks for sharing! I'm here to help. What's next?",
-      avatar: messages.find(m => m.sender === 'Rancho').avatar,
+      avatar: messages.find(m => m.sender === 'Rancho')?.avatar || 'https://your-rancho-avatar.jpg',
     };
     setMessages([...messages, newMessage, ranchoResponse]);
     setInputText('');
@@ -63,21 +82,24 @@ const ChatScreen = () => {
       id: messages.length + 1,
       sender: 'You',
       text,
-      avatar: messages.find(m => m.sender === 'You').avatar,
+      avatar: messages.find(m => m.sender === 'You')?.avatar || 'https://your-user-avatar.jpg',
     };
     setMessages([...messages, newMessage]);
   };
 
   return (
     <SafeAreaView style={[styles.container, isDarkMode && styles.containerDark]}>
-      {/* Custom Header */}
+      {/* Custom Header with Gradient */}
       <View style={[styles.header, isDarkMode && styles.headerDark]}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Svg width={24} height={24} fill="#ffffff">
             <Path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z" />
           </Svg>
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, isDarkMode && styles.headerTitleDark]}>Rancho</Text>
+        <View style={styles.headerCenter}>
+          <Text style={[styles.headerTitle, isDarkMode && styles.headerTitleDark]}>Rancho</Text>
+          <Text style={styles.headerSubtitle}>Your AI Companion</Text>
+        </View>
         <TouchableOpacity style={styles.menuButton} onPress={() => setShowDropdown(true)}>
           <Svg width={24} height={24} fill="#ffffff">
             <Path d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM40,72H216a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16ZM216,184H40a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Z" />
@@ -85,22 +107,46 @@ const ChatScreen = () => {
         </TouchableOpacity>
       </View>
 
+      {/* Scrollable Content with Avatar and Messages */}
       <ScrollView
         style={styles.main}
         contentContainerStyle={styles.mainContent}
         ref={scrollViewRef}
+        showsVerticalScrollIndicator={false}
       >
-        <View style={styles.imageContainer}>
-          <View style={[styles.glow, isDarkMode && styles.glowDark]} />
-          <ImageBackground
-            source={{ uri: 'https://your-rancho-image.jpg' }} // Replace with your asset
-            style={styles.image}
-            imageStyle={styles.imageStyle}
-          />
+        {/* Embedded Avatar WebView with Animation */}
+        <Animated.View 
+          style={[
+            styles.avatarContainer,
+            { transform: [{ scale: pulseAnim }] }
+          ]}
+        >
+          <View style={styles.glowBorder}>
+            <WebView
+              source={{ uri: 'http://192.168.137.61:5173/' }}
+              style={styles.webView}
+              javaScriptEnabled={true}
+              domStorageEnabled={true}
+              mediaPlaybackRequiresUserAction={false}
+              allowsInlineMediaPlayback={true}
+              allowsFullscreenVideo={true}
+              mixedContentMode="always"
+              // IMPORTANT: These props enable audio
+              allowsProtectedMedia={true}
+              mediaCapturePermissionGrantType="grantIfSameHostElsePrompt"
+            />
+          </View>
+        </Animated.View>
+
+        {/* Welcome Text with Icon */}
+        <View style={styles.welcomeContainer}>
+          <Text style={styles.welcomeIcon}>👋</Text>
+          <Text style={[styles.welcomeText, isDarkMode && styles.welcomeTextDark]}>
+            Hi, I'm Rancho. How are you feeling today?
+          </Text>
         </View>
-        <Text style={[styles.welcomeText, isDarkMode && styles.welcomeTextDark]}>
-          Hi, I'm Rancho. How are you feeling today?
-        </Text>
+
+        {/* Chat Messages */}
         {messages.map(message => (
           <ChatBubble
             key={message.id}
@@ -110,10 +156,30 @@ const ChatScreen = () => {
             isUser={message.sender === 'You'}
           />
         ))}
+      </ScrollView>
+
+      {/* Fixed Bottom Input and Quick Replies */}
+      <View style={[styles.fixedInputContainer, isDarkMode && styles.fixedInputContainerDark]}>
+        <View style={styles.quickReplies}>
+          <TouchableOpacity
+            style={[styles.quickReplyButton, isDarkMode && styles.quickReplyButtonDark]}
+            onPress={() => handleQuickReply('I feel anxious')}
+          >
+            <Text style={styles.quickReplyIcon}>😰</Text>
+            <Text style={[styles.quickReplyText, isDarkMode && styles.quickReplyTextDark]}>I feel anxious</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.quickReplyButton, isDarkMode && styles.quickReplyButtonDark]}
+            onPress={() => handleQuickReply('Help me calm down')}
+          >
+            <Text style={styles.quickReplyIcon}>🧘</Text>
+            <Text style={[styles.quickReplyText, isDarkMode && styles.quickReplyTextDark]}>Help me calm down</Text>
+          </TouchableOpacity>
+        </View>
         <View style={styles.inputContainer}>
           <TouchableOpacity style={styles.attachButton} onPress={handleCamera}>
-            <Svg width={24} height={24} fill="#13ecec">
-              <Path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm-8-80V80a8,8,0,0,1,16,0v56a8,8,0,0,1-16,0Zm24,32a12,12,0,1,1-12-12A12,12,0,0,1,144,164Z" />
+            <Svg width={22} height={22} viewBox="0 0 24 24" fill="#6b9aff">
+              <Path d="M23,19a2,2,0,0,1-2,2H3a2,2,0,0,1-2-2V8A2,2,0,0,1,3,6H7a1,1,0,0,0,1-1,3,3,0,0,1,3-3h2a3,3,0,0,1,3,3,1,1,0,0,0,1,1h4a2,2,0,0,1,2,2ZM12,18a5,5,0,1,0-5-5A5,5,0,0,0,12,18Zm0-8a3,3,0,1,0,3,3A3,3,0,0,0,12,10Z" />
             </Svg>
           </TouchableOpacity>
           <TextInput
@@ -127,32 +193,17 @@ const ChatScreen = () => {
             multiline
           />
           <TouchableOpacity style={styles.voiceButton} onPress={() => Alert.alert('Voice', 'Voice recording feature')}>
-            <Svg width={20} height={20} fill="#13ecec">
-              <Path d="M12,2A10,10,0,0,0,2,12a10,10,0,0,0,10,10,10,10,0,0,0,10-10A10,10,0,0,0,12,2Zm0,18a8,8,0,0,1-8-8,8,8,0,0,1,8-8,8,8,0,0,1,8,8A8,8,0,0,1,12,20ZM12,6a6,6,0,0,0-6,6H8a4,4,0,0,1,8,0h2A6,6,0,0,0,12,6Z" />
+            <Svg width={20} height={20} viewBox="0 0 24 24" fill="#6b9aff">
+              <Path d="M12,15a4,4,0,0,0,4-4V5A4,4,0,0,0,8,5v6A4,4,0,0,0,12,15ZM10,5a2,2,0,0,1,4,0v6a2,2,0,0,1-4,0Zm10,6a1,1,0,0,0-2,0A6,6,0,0,1,6,11a1,1,0,0,0-2,0,8,8,0,0,0,7,7.93V21H9a1,1,0,0,0,0,2h6a1,1,0,0,0,0-2H13V18.93A8,8,0,0,0,20,11Z" />
             </Svg>
           </TouchableOpacity>
           <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
-            <Svg width={20} height={20} fill="#ffffff">
-              <Path d="M232,96a16,16,0,0,0-16-16H184V48a16,16,0,0,0-16-16H40A16,16,0,0,0,24,48V176a8,8,0,0,0,13,6.22L72,154V184a16,16,0,0,0,16,16h93.59L219,230.22a8,8,0,0,0,5,1.78,8,8,0,0,0,8-8Zm-42.55,89.78a8,8,0,0,0-5-1.78H88V152h80a16,16,0,0,0,16-16V96h32V207.25Z" />
+            <Svg width={20} height={20} viewBox="0 0 24 24" fill="#ffffff">
+              <Path d="M21.426,11.095l-17-8A1,1,0,0,0,3.03,4.242L4.969,12,3.03,19.758a1,1,0,0,0,1.4,1.147l17-8a1,1,0,0,0,0-1.81ZM5.481,18.197l.877-3.509L12,12,6.358,9.312l-.877-3.509L18.651,12Z" />
             </Svg>
           </TouchableOpacity>
         </View>
-        <View style={styles.quickReplies}>
-          <TouchableOpacity
-            style={[styles.quickReplyButton, isDarkMode && styles.quickReplyButtonDark]}
-            onPress={() => handleQuickReply('I feel anxious')}
-          >
-            <Text style={[styles.quickReplyText, isDarkMode && styles.quickReplyTextDark]}>I feel anxious</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.quickReplyButton, isDarkMode && styles.quickReplyButtonDark]}
-            onPress={() => handleQuickReply('Help me calm down')}
-          >
-            <Text style={[styles.quickReplyText, isDarkMode && styles.quickReplyTextDark]}>Help me calm down</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-      <DropdownMenu isVisible={showDropdown} onClose={() => setShowDropdown(false)} />
+      </View>
     </SafeAreaView>
   );
 };
@@ -160,10 +211,10 @@ const ChatScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111521', // Match home screen dark background
+    backgroundColor: '#0a0f1e',
   },
   containerDark: {
-    backgroundColor: '#111521', // Consistent dark theme
+    backgroundColor: '#0a0f1e',
   },
   // Header Styles
   header: {
@@ -171,36 +222,47 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 16,
     backgroundColor: '#111521',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(42,96,234,0.15)',
   },
   headerDark: {
     backgroundColor: '#111521',
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(19, 236, 236, 0.1)',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(42,96,234,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  headerTitle: {
+  headerCenter: {
     flex: 1,
-    textAlign: 'center',
-    fontSize: 18,
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#ffffff',
     fontFamily: 'SpaceGrotesk',
+    letterSpacing: 0.5,
   },
   headerTitleDark: {
     color: '#ffffff',
   },
+  headerSubtitle: {
+    fontSize: 12,
+    color: '#6b9aff',
+    fontFamily: 'SpaceGrotesk',
+    marginTop: 2,
+  },
   menuButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(19, 236, 236, 0.1)',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(42,96,234,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -208,62 +270,71 @@ const styles = StyleSheet.create({
   main: {
     flex: 1,
     paddingHorizontal: 16,
-    backgroundColor: '#111521', // Match app theme
+    backgroundColor: '#0a0f1e',
   },
   mainContent: {
     alignItems: 'center',
-    gap: 24,
-    paddingBottom: 20, // Reduced padding since no duplicate nav
+    gap: 20,
+    paddingBottom: 200,
+    paddingTop: 16,
   },
-  imageContainer: {
+  avatarContainer: {
     width: '100%',
-    maxWidth: 384, // max-w-sm
-    position: 'relative',
+    height: 360,
+    borderRadius: 16,
+    overflow: 'hidden',
+    backgroundColor: '#000',
   },
-  glow: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(19, 236, 236, 0.2)', // primary/20
-    shadowColor: '#13ecec',
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 10,
+  glowBorder: {
+    flex: 1,
+    borderRadius: 16,
+    padding: 2,
+    background: 'linear-gradient(135deg, #2a60ea, #6b9aff)',
   },
-  glowDark: {
-    backgroundColor: 'rgba(19, 236, 236, 0.2)',
+  webView: {
+    flex: 1,
+    borderRadius: 14,
   },
-  image: {
-    width: '100%',
-    height: 256, // h-64
+  welcomeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 20,
   },
-  imageStyle: {
-    borderRadius: 12, // rounded-xl
+  welcomeIcon: {
+    fontSize: 24,
   },
   welcomeText: {
+    flex: 1,
     fontSize: 16,
-    color: '#ffffff', // White text for dark theme
+    color: '#ffffff',
     textAlign: 'center',
     fontFamily: 'SpaceGrotesk',
+    lineHeight: 24,
   },
   welcomeTextDark: {
     color: '#ffffff',
   },
   inputContainer: {
     width: '100%',
-    maxWidth: 384,
-    backgroundColor: 'rgba(16, 34, 34, 0.5)',
-    borderRadius: 25,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    backgroundColor: 'rgba(17, 21, 33, 0.8)',
+    borderRadius: 30,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(19, 236, 236, 0.2)',
+    borderWidth: 2,
+    borderColor: 'rgba(42,96,234,0.4)',
+    shadowColor: '#2a60ea',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   input: {
     flex: 1,
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: 'SpaceGrotesk',
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -273,53 +344,81 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   attachButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(19, 236, 236, 0.1)',
-    marginRight: 8,
+    padding: 10,
+    borderRadius: 22,
+    backgroundColor: 'rgba(42,96,234,0.2)',
+    marginRight: 4,
   },
   voiceButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(19, 236, 236, 0.1)',
-    marginRight: 8,
+    padding: 10,
+    borderRadius: 22,
+    backgroundColor: 'rgba(42,96,234,0.2)',
+    marginLeft: 4,
+    marginRight: 4,
   },
   sendButton: {
-    padding: 10,
-    borderRadius: 20,
+    padding: 12,
+    borderRadius: 24,
     backgroundColor: '#2a60ea',
     shadowColor: '#2a60ea',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.6,
+    shadowRadius: 8,
+    elevation: 8,
   },
   quickReplies: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 12,
-    marginTop: 16,
+    gap: 10,
+    marginBottom: 12,
+    flexWrap: 'wrap',
   },
   quickReplyButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-    backgroundColor: 'rgba(19, 236, 236, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(19, 236, 236, 0.3)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 24,
+    backgroundColor: 'rgba(42,96,234,0.2)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(42,96,234,0.5)',
   },
   quickReplyButtonDark: {
-    backgroundColor: 'rgba(19, 236, 236, 0.15)',
-    borderColor: 'rgba(19, 236, 236, 0.4)',
+    backgroundColor: 'rgba(42,96,234,0.25)',
+    borderColor: 'rgba(42,96,234,0.6)',
+  },
+  quickReplyIcon: {
+    fontSize: 16,
   },
   quickReplyText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#13ecec',
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#6b9aff',
     fontFamily: 'SpaceGrotesk',
   },
   quickReplyTextDark: {
-    color: '#13ecec',
+    color: '#6b9aff',
+  },
+  fixedInputContainer: {
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    backgroundColor: 'rgba(17, 21, 33, 0.98)',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 20,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(42,96,234,0.3)',
+    zIndex: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10,
+  },
+  fixedInputContainerDark: {
+    backgroundColor: 'rgba(17, 21, 33, 0.98)',
   },
 });
 
