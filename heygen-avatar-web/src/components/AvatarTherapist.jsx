@@ -8,7 +8,9 @@ const AvatarTherapist = () => {
   const [sessionId, setSessionId] = useState(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const backendURL = "http://192.168.137.61:5000";
+  const backendURL = "http://10.10.0.94:5000";
+  const initializingRef = useRef(false);
+  const hasGreetedRef = useRef(false);
 
   const removeGreenScreen = () => {
     const video = videoRef.current;
@@ -59,10 +61,90 @@ const AvatarTherapist = () => {
     }
   }, [isInitialized]);
 
+const speakText = async (text) => {
+  if (!sessionId) {
+    console.error("❌ No session ID available - cannot speak yet");
+    return;
+  }
+
+  console.log('🎤 Attempting to speak:', text);
+  console.log('🎤 Using session ID:', sessionId);
+
+  try {
+    const response = await fetch(`${backendURL}/send_task`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        session_id: sessionId,
+        text: text,
+        task_type: "repeat"
+      })
+    });
+    
+    console.log('🎤 Response status:', response.status);
+    
+    if (response.ok) {
+      const result = await response.json();
+      console.log('✅ Avatar speech sent successfully:', result);
+    } else {
+      const errorText = await response.text();
+      console.error('❌ Failed to send speech:', response.status, errorText);
+    }
+  } catch (err) {
+    console.error('❌ Failed to send text to avatar:', err);
+  }
+};
+
+useEffect(() => {
+  const handleMessage = (event) => {
+    console.log('📨 Raw event received:', event);
+    console.log('📨 Event data:', event.data);
+    
+    try {
+      // Handle both string and object data
+      const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+      console.log('📨 Parsed data:', data);
+      
+      if (data.type === 'speak' && data.text) {
+        console.log('🗣️ Speaking text:', data.text);
+        speakText(data.text);
+      } else {
+        console.log('⚠️ Message received but not a speak command:', data);
+      }
+    } catch (err) {
+      console.error('❌ Error parsing message:', err);
+      console.error('❌ Raw data was:', event.data);
+    }
+  };
+
+  // Add listeners for React Native WebView
+  window.addEventListener('message', handleMessage);
+  document.addEventListener('message', handleMessage);
+
+  console.log('✅ Message listeners added, sessionId:', sessionId);
+
+  return () => {
+    window.removeEventListener('message', handleMessage);
+    document.removeEventListener('message', handleMessage);
+    console.log('🧹 Message listeners removed');
+  };
+}, [sessionId]);
+
   const initAvatar = async () => {
+    // Prevent duplicate initialization
+    if (initializingRef.current) {
+      console.log("Already initializing, skipping...");
+      return;
+    }
+
+    initializingRef.current = true;
+
     try {
       setIsLoading(true);
       
+      console.log("Creating session...");
       const createRes = await fetch(`${backendURL}/create_session`, {
         method: 'POST',
         headers: {
@@ -82,6 +164,7 @@ const AvatarTherapist = () => {
         throw new Error("No SDP data in response");
       }
       
+      console.log("Session created:", session_id);
       setSessionId(session_id);
 
       const iceServers = ice_servers2 || [];
@@ -139,32 +222,48 @@ const AvatarTherapist = () => {
         })
       });
 
-      setTimeout(async () => {
-        try {
-          await fetch(`${backendURL}/send_task`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              session_id,
-              text: "Hi, I'm Rancho, your therapist. How can I help you today?",
-              task_type: "repeat"
-            })
-          });
-        } catch (err) {
-          console.error("Failed to send greeting:", err);
-        }
-      }, 3000);
+      // Send greeting only once
+      if (!hasGreetedRef.current) {
+        hasGreetedRef.current = true;
+        setTimeout(async () => {
+          try {
+            console.log("Sending greeting...");
+            await fetch(`${backendURL}/send_task`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                session_id,
+                text: "Hi, I'm Rancho, your therapist. How can I help you today?",
+                task_type: "repeat"
+              })
+            });
+          } catch (err) {
+            console.error("Failed to send greeting:", err);
+          }
+        }, 3000);
+      }
 
     } catch (err) {
       console.error("Avatar init error:", err);
       setIsLoading(false);
+      initializingRef.current = false;
     }
   };
 
   useEffect(() => {
     initAvatar();
+
+    // Cleanup on unmount
+    return () => {
+      if (pcRef.current) {
+        pcRef.current.close();
+      }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
   }, []);
 
   return (
@@ -378,7 +477,6 @@ const AvatarTherapist = () => {
             alignItems: "center",
             justifyContent: "center"
           }}>
-            {/* Loading Animation */}
             {isLoading && (
               <div style={{
                 position: "absolute",
@@ -394,7 +492,6 @@ const AvatarTherapist = () => {
                 zIndex: 10,
                 backgroundColor: "#000"
               }}>
-                {/* Floating particles */}
                 {[...Array(15)].map((_, i) => (
                   <div
                     key={i}
@@ -407,7 +504,6 @@ const AvatarTherapist = () => {
                   />
                 ))}
 
-                {/* Avatar placeholder with shimmer */}
                 <div className="avatar-placeholder">
                   <div style={{
                     position: "absolute",
@@ -431,10 +527,8 @@ const AvatarTherapist = () => {
                   }} />
                 </div>
 
-                {/* Spinning loader */}
                 <div className="loader-circle" />
 
-                {/* Text with gradient */}
                 <div className="loading-text" style={{
                   fontSize: "20px",
                   fontWeight: "700",
@@ -445,12 +539,10 @@ const AvatarTherapist = () => {
                   Loading Rancho
                 </div>
 
-                {/* Progress bar */}
                 <div className="progress-bar">
                   <div className="progress-fill" style={{ width: "100%" }} />
                 </div>
 
-                {/* Status text */}
                 <div style={{
                   color: "rgba(107, 154, 255, 0.7)",
                   fontSize: "14px",
@@ -462,7 +554,6 @@ const AvatarTherapist = () => {
               </div>
             )}
 
-            {/* Hidden video for processing - AUDIO ENABLED */}
             <video
               ref={videoRef}
               autoPlay
@@ -472,7 +563,6 @@ const AvatarTherapist = () => {
               }}
             />
             
-            {/* Canvas displays avatar with black background */}
             <canvas
               ref={canvasRef}
               style={{
