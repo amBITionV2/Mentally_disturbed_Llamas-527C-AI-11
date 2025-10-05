@@ -7,7 +7,7 @@ const { height } = Dimensions.get('window');
 
 const OnboardingScreen = ({ navigation }) => {
   const handleGetStarted = () => {
-    navigation.navigate('Login');
+    navigation.navigate('Tabs');
   };
 
   return (
