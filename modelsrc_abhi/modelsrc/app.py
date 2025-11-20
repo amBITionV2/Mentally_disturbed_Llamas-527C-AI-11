@@ -7,8 +7,8 @@ import logging
 # Ensure these files exist in the same directory as this app file:
 # - multimodel_therapist.py with get_therapist_response(...)
 # - multimodel_friend.py with get_friend_response(...)
-from modelsrc.multimodel_therapist import get_therapist_response
-from modelsrc.multimodel_friend import get_friend_response
+from multimodel_therapist import get_therapist_response
+from multimodel_friend import get_friend_response
 
 # ------------------------------------------------------------------------------
 # App Initialization and Configuration

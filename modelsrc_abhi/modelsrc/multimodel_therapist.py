@@ -7,13 +7,13 @@ from typing import List
 
 from dotenv import load_dotenv
 
-# LangChain imports
-from langchain_groq.chat_models import ChatGroq
-from langchain_huggingface.embeddings import HuggingFaceEmbeddings
+# LangChain imports - MODERN LCEL
+from langchain_groq import ChatGroq
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain.prompts import PromptTemplate
-from langchain.chains import LLMChain
-from langchain.schema import Document
+from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.documents import Document
 
 # Speech
 import pyttsx3
@@ -37,7 +37,7 @@ prompt_template = """
 You are "Sunny", a compassionate, empathetic, and non-judgmental virtual therapist.
 Treat the dialogue as a real, human-like therapy session.
 
-You receive sensor and facial data that reflect the user’s emotional and physical state. 
+You receive sensor and facial data that reflect the user's emotional and physical state. 
 Use this data to gently acknowledge their condition before proceeding to your response.
 
 Context from similar past sessions:
@@ -50,13 +50,13 @@ User message:
 {query}
 
 Sunny:
-1. Begin by empathetically acknowledging the user’s current state based on their parameters (mood, stress, fatigue, and recovery).
+1. Begin by empathetically acknowledging the user's current state based on their parameters (mood, stress, fatigue, and recovery).
    - For example:
-     - If mood = sad and stress is high → “I can sense you’re feeling low and a bit stressed right now.”
-     - If fatigue is high but recovery is improving → “It seems you’ve been tired lately, but you’re slowly getting back on track.”
+     - If mood = sad and stress is high → "I can sense you're feeling low and a bit stressed right now."
+     - If fatigue is high but recovery is improving → "It seems you've been tired lately, but you're slowly getting back on track."
    - Keep it natural and warm — not robotic.
 
-2. Then, interpret and respond to the user’s message ({query}) thoughtfully and conversationally.
+2. Then, interpret and respond to the user's message ({query}) thoughtfully and conversationally.
    - Offer emotional validation.
    - Ask gentle, open-ended questions if appropriate.
    - Provide coping suggestions or reflections related to their context.
@@ -93,26 +93,26 @@ def load_faiss_index():
     return FAISS.load_local(FAISS_INDEX_PATH, embeddings, allow_dangerous_deserialization=True)
 
 
-# ---------- LLM + Retrieval Manually Combined ----------
+# ---------- LLM + Retrieval with LCEL ----------
 def get_custom_chain(vectorstore):
     llm = ChatGroq(
         groq_api_key=GROQ_API_KEY,
         model_name=MODEL_NAME,
     )
-    chain = LLMChain(
-        llm=llm,
-        prompt=prompt
-    )
+    
+    # Modern LCEL chain
+    chain = prompt | llm | StrOutputParser()
 
     def run(query: str, parameters: dict, context: str):
         retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
-        docs = retriever.get_relevant_documents(query)
+        docs = retriever.invoke(query)
         retrieved_context = "\n\n".join([d.page_content for d in docs])
-        return chain.run(
-            query=query,
-            parameters=json.dumps(parameters),
-            context=retrieved_context or context
-        )
+        
+        return chain.invoke({
+            "query": query,
+            "parameters": json.dumps(parameters),
+            "context": retrieved_context or context
+        })
 
     return run
 

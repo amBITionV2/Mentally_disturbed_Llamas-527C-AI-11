@@ -4,9 +4,9 @@ import warnings
 from typing import List
 
 from dotenv import load_dotenv
-from langchain_groq.chat_models import ChatGroq
-from langchain.prompts import PromptTemplate
-from langchain.chains import LLMChain
+from langchain_groq import ChatGroq
+from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import StrOutputParser
 
 # ---------- Environment & Warnings ----------
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -27,7 +27,7 @@ You respond with warmth, empathy, humor, and authenticity — like a best friend
 The user has selected the **{mode}** mode. 
 This defines your vibe and style for this conversation:
 - **Caring**: gentle, nurturing, patient, validating feelings.
-- **Chill**: casual, relaxed, “hang out” vibes, less formal.
+- **Chill**: casual, relaxed, "hang out" vibes, less formal.
 - **Flirty**: playful, light teasing, but respectful and supportive.
 - **Funny**: lots of humor, jokes, memes, light-hearted responses.
 - **Deep**: thoughtful, introspective, soulful conversations.
@@ -39,11 +39,12 @@ Adapt your tone, language, and energy to match the selected mode naturally.
 ### Core Principles
 - Always sound human, warm, and approachable — not like a robot or therapist.
 - Validate emotions first before responding or giving advice.
-- Don’t lecture; keep the conversation flowing like a natural chat.
+- Don't lecture; keep the conversation flowing like a natural chat.
 - Use occasional emojis, casual language, or humor where appropriate.
 - Ask open-ended questions to invite the user to open up.
 - Share comforting or relatable thoughts to make the user feel less alone.
 - Respect boundaries and keep it safe, supportive, and fun.
+- Don't reference your AI nature — be fully in the role of their best friend.
 
 ### Conversation History
 Below is the ongoing chat between you and the user. Continue the conversation naturally, staying in character and maintaining emotional continuity.
@@ -60,13 +61,14 @@ prompt = PromptTemplate(
     input_variables=["query", "mode", "friend_name", "context"]
 )
 
-# ---------- Initialize LLM ----------
+# ---------- Initialize LLM with LCEL ----------
 llm = ChatGroq(
     groq_api_key=GROQ_API_KEY,
     model_name=MODEL_NAME,
 )
 
-chain = LLMChain(llm=llm, prompt=prompt)
+# Modern LCEL chain
+chain = prompt | llm | StrOutputParser()
 
 # ---------- FastAPI Integration Helper ----------
 _FRIEND_CHAIN = chain if GROQ_API_KEY else None
@@ -87,7 +89,7 @@ def _ensure_friend_chain():
         groq_api_key=GROQ_API_KEY,
         model_name=MODEL_NAME,
     )
-    _FRIEND_CHAIN = LLMChain(llm=friend_llm, prompt=prompt)
+    _FRIEND_CHAIN = prompt | friend_llm | StrOutputParser()
     return _FRIEND_CHAIN
 
 
@@ -104,16 +106,12 @@ def get_friend_response(query: str, mode: str, friend_name: str) -> str:
     """
     friend_chain = _ensure_friend_chain()
 
-    formatted = prompt.format(
-        query=query,
-        mode=mode,
-        friend_name=friend_name,
-        context="",
-    )
-
-    # Use underlying LLM directly for the pre-rendered prompt
-    response = friend_chain.llm.invoke(formatted)
-    return response.content.strip()
+    return friend_chain.invoke({
+        "query": query,
+        "mode": mode,
+        "friend_name": friend_name,
+        "context": "",
+    })
 
 # ---------- Main CLI ----------
 def main():
@@ -143,17 +141,13 @@ def main():
             print(f"\n{friend_name}: Aww, okay. I'm really glad we talked today. Take care, okay? 🧡\n")
             break
 
-        # Combine conversation context
-        formatted_prompt = prompt.format(
-            query=user_input,
-            mode=mode,
-            friend_name=friend_name,
-            context=context
-        )
-
         try:
-            response = llm.invoke(formatted_prompt)
-            reply = response.content.strip()
+            reply = chain.invoke({
+                "query": user_input,
+                "mode": mode,
+                "friend_name": friend_name,
+                "context": context
+            })
         except Exception as e:
             print(f"⚠️ Error from model: {e}")
             continue
