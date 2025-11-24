@@ -1,0 +1,11 @@
+Model Information:
+* title:	[VRC] Kipfel (Youth)
+* source:	https://sketchfab.com/3d-models/vrc-kipfel-youth-56a0f8f284194f7ebad1f07db2c4ec89
+* author:	VückyZ (https://sketchfab.com/vuckyz123)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "[VRC] Kipfel (Youth)" (https://sketchfab.com/3d-models/vrc-kipfel-youth-56a0f8f284194f7ebad1f07db2c4ec89) by VückyZ (https://sketchfab.com/vuckyz123) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
