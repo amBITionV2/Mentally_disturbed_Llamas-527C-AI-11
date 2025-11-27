@@ -8,7 +8,7 @@ const AvatarTherapist = () => {
   const [sessionId, setSessionId] = useState(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const backendURL = "http://10.10.0.94:5000";
+  const backendURL = "http://192.168.1.41:5000";
   const initializingRef = useRef(false);
   const hasGreetedRef = useRef(false);
 
