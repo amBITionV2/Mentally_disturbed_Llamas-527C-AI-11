@@ -1,0 +1,15 @@
+[
+  {
+    "id": 1,
+    "name": "EMY",
+    "image": "../assets/avatars/emy.png",
+    "character": "Friend",
+    "mode": "Funny",
+    "tone": "Supportive",
+    "greeting": "Hi this is Emy...",
+    "theme": {
+      "primary": "#4A90E2",
+      "secondary": "#6BB6FF"
+    }
+  }
+]
