@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avatar Viewer - Three.js</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            overflow: hidden;
+            color: #fff;
+        }
+
+        #canvas {
+            display: block;
+            width: 100%;
+            height: 100vh;
+        }
+
+        .hud {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px 20px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            font-size: 12px;
+            color: #aaa;
+            max-width: 250px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .hud-item {
+            margin: 5px 0;
+        }
+
+        .hud-label {
+            color: #2563eb;
+            font-weight: 600;
+        }
+
+        .gesture-panel {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            max-width: 200px;
+        }
+
+        .gesture-btn {
+            background: rgba(37, 99, 235, 0.9);
+            border: none;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .gesture-btn:hover {
+            background: rgba(37, 99, 235, 1);
+            transform: scale(1.05);
+        }
+
+        .gesture-btn:active {
+            transform: scale(0.95);
+        }
+
+        .status {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #4ade80;
+            border: 1px solid rgba(37, 99, 235, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .speaking-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(37, 99, 235, 0.9);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            display: none;
+            animation: pulse 1s infinite;
+        }
+
+        .speaking-indicator.active {
+            display: block;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 30px;
+            border-radius: 12px;
+            display: none;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-top: 3px solid #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+
+    <!-- Status Display -->
+    <div class="status">
+        Model: <strong id="modelName">Loading...</strong>
+    </div>
+
+    <!-- Speaking Indicator -->
+    <div class="speaking-indicator" id="speakingIndicator">
+        🔊 Avatar Speaking...
+    </div>
+
+    <!-- HUD Info -->
+    <div class="hud">
+        <div class="hud-item">
+            <span class="hud-label">FPS:</span> <span id="fps">60</span>
+        </div>
+        <div class="hud-item">
+            <span class="hud-label">Memory:</span> <span id="memory">0 MB</span>
+        </div>
+        <div class="hud-item">
+            <span class="hud-label">Vertices:</span> <span id="vertices">0</span>
+        </div>
+        <div class="hud-item">
+            <span class="hud-label">Triangles:</span> <span id="triangles">0</span>
+        </div>
+    </div>
+
+    <!-- Gesture Controls -->
+    <div class="gesture-panel">
+        <button class="gesture-btn" onclick="viewer.gesture('wave')">👋 Wave</button>
+        <button class="gesture-btn" onclick="viewer.gesture('nod')">🤝 Nod</button>
+        <button class="gesture-btn" onclick="viewer.gesture('thumbsup')">👍 Thumbs</button>
+        <button class="gesture-btn" onclick="viewer.gesture('idle')">😌 Idle</button>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Loading Avatar Model...</p>
+    </div>
+
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r166/three.min.js"></script>
+
+    <!-- Optional: Draco Compression (uncomment if using compressed models) -->
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r166/draco/draco_decoder.js"></script> -->
+
+    <!-- Main Viewer Script -->
+    <script>
+        // ===== CONFIGURATION =====
+        const CONFIG = {
+            modelUrl: './assets/model.glb',
+            cacheKey: 'avatar_model_cache',
+            cacheDuration: 7 * 24 * 60 * 60 * 1000, // 7 days
+            targetFPS: 60,
+            animationSpeed: 1,
+        };
+
+        // ===== UTILITY FUNCTIONS =====
+        class StorageManager {
+            static async getItem(key) {
+                try {
+                    return new Promise((resolve) => {
+                        const request = indexedDB.open('AvatarDB', 1);
+                        request.onerror = () => resolve(null);
+                        request.onupgradeneeded = (e) => {
+                            e.target.result.createObjectStore('models');
+                        };
+                        request.onsuccess = (e) => {
+                            const db = e.target.result;
+                            const tx = db.transaction('models', 'readonly');
+                            const store = tx.objectStore('models');
+                            const get = store.get(key);
+                            get.onsuccess = () => resolve(get.result?.data || null);
+                        };
+                    });
+                } catch (err) {
+                    console.error('Storage read error:', err);
+                    return null;
+                }
+            }
+
+            static async setItem(key, data) {
+                try {
+                    return new Promise((resolve) => {
+                        const request = indexedDB.open('AvatarDB', 1);
+                        request.onupgradeneeded = (e) => {
+                            e.target.result.createObjectStore('models');
+                        };
+                        request.onsuccess = (e) => {
+                            const db = e.target.result;
+                            const tx = db.transaction('models', 'readwrite');
+                            const store = tx.objectStore('models');
+                            store.put(
+                                { data, timestamp: Date.now() },
+                                key
+                            );
+                            tx.oncomplete = () => resolve(true);
+                        };
+                    });
+                } catch (err) {
+                    console.error('Storage write error:', err);
+                    return false;
+                }
+            }
+        }
+
+        // ===== MAIN VIEWER CLASS =====
+        class AvatarViewer {
+            constructor() {
+                this.profile = this.parseProfile();
+                this.scene = new THREE.Scene();
+                this.model = null;
+                this.mixer = null;
+                this.actions = {};
+                this.currentAction = null;
+                this.morphTargets = {};
+                this.headBobPhase = 0;
+                this.clock = new THREE.Clock();
+                this.stats = { fps: 0, vertices: 0, triangles: 0 };
+                this.frameCount = 0;
+                this.fpsUpdateTime = 0;
+                
+                this.init();
+            }
+
+            parseProfile() {
+                const params = new URLSearchParams(window.location.search);
+                const profileParam = params.get('profile');
+                const speakParam = params.get('speak');
+
+                let profile = {
+                    baseModel: 'model.glb',
+                    materials: {
+                        skinColor: '#E7C7A4',
+                        hairColor: '#2b1b0f',
+                        outfitPreset: 'jacket_blue',
+                    },
+                };
+
+                if (profileParam) {
+                    try {
+                        profile = JSON.parse(decodeURIComponent(profileParam));
+                    } catch (err) {
+                        console.warn('Invalid profile param:', err);
+                    }
+                }
+
+                if (speakParam) {
+                    setTimeout(() => {
+                        this.speak(decodeURIComponent(speakParam));
+                    }, 500);
+                }
+
+                return profile;
+            }
+
+            async init() {
+                this.setupRenderer();
+                this.setupCamera();
+                this.setupLighting();
+                await this.loadModel();
+                this.setupEventListeners();
+                this.animate();
+            }
+
+            setupRenderer() {
+                const canvas = document.getElementById('canvas');
+                this.renderer = new THREE.WebGLRenderer({
+                    canvas,
+                    antialias: true,
+                    alpha: true,
+                    preserveDrawingBuffer: true,
+                });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.renderer.setClearColor(0x000000, 0);
+                this.renderer.shadowMap.enabled = true;
+            }
+
+            setupCamera() {
+                const aspect = window.innerWidth / window.innerHeight;
+                this.camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
+                this.camera.position.z = 2.5;
+                this.camera.position.y = 0.3;
+            }
+
+            setupLighting() {
+                // Hemisphere light for ambient illumination
+                const hemiLight = new THREE.HemisphereLight(
+                    0xffffff,
+                    0x444444,
+                    1
+                );
+                this.scene.add(hemiLight);
+
+                // Directional light for shadows
+                const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+                dirLight.position.set(5, 10, 7);
+                dirLight.castShadow = true;
+                dirLight.shadow.mapSize.width = 2048;
+                dirLight.shadow.mapSize.height = 2048;
+                this.scene.add(dirLight);
+
+                // Fill light from opposite side
+                const fillLight = new THREE.DirectionalLight(0x88ccff, 0.4);
+                fillLight.position.set(-5, 5, -7);
+                this.scene.add(fillLight);
+            }
+
+            async loadModel() {
+                try {
+                    document.getElementById('loading').classList.add('show');
+
+                    // Try to load from cache first
+                    let modelData = await StorageManager.getItem(CONFIG.cacheKey);
+
+                    if (!modelData) {
+                        // Fetch from URL
+                        const response = await fetch(CONFIG.modelUrl);
+                        if (!response.ok) throw new Error('Failed to fetch model');
+                        modelData = await response.arrayBuffer();
+
+                        // Cache for future use
+                        await StorageManager.setItem(CONFIG.cacheKey, modelData);
+                    }
+
+                    // Parse glTF
+                    const loader = new THREE.GLTFLoader();
+                    loader.parse(modelData, '', (gltf) => {
+                        this.onModelLoaded(gltf);
+                    });
+                } catch (err) {
+                    console.error('Model load error:', err);
+                    this.showError('Failed to load avatar model');
+                }
+            }
+
+            onModelLoaded(gltf) {
+                this.model = gltf.scene;
+                this.model.scale.set(1, 1, 1);
+                this.model.position.y = 0;
+                this.scene.add(this.model);
+
+                // Enable shadows
+                this.model.traverse((node) => {
+                    if (node.isMesh) {
+                        node.castShadow = true;
+                        node.receiveShadow = true;
+                    }
+                });
+
+                // Setup animations
+                if (gltf.animations.length > 0) {
+                    this.mixer = new THREE.AnimationMixer(this.model);
+                    gltf.animations.forEach((clip) => {
+                        this.actions[clip.name] = this.mixer.clipAction(clip);
+                    });
+                }
+
+                // Apply customization
+                this.applyCustomization();
+
+                // Extract morph targets
+                this.extractMorphTargets();
+
+                // Update stats
+                this.updateStats();
+
+                // Hide loading
+                document.getElementById('loading').classList.remove('show');
+                document.getElementById('modelName').textContent =
+                    this.profile.baseModel;
+
+                // Start idle animation
+                this.playAnimation('idle');
+            }
+
+            applyCustomization() {
+                const { materials } = this.profile;
+
+                this.model.traverse((node) => {
+                    if (!node.isMesh) return;
+
+                    // Apply colors to specific mesh groups
+                    if (node.name.includes('Skin') && node.material) {
+                        node.material.color.setStyle(materials.skinColor);
+                    }
+                    if (node.name.includes('Hair') && node.material) {
+                        node.material.color.setStyle(materials.hairColor);
+                    }
+                    if (
+                        node.name.includes('Outfit') ||
+                        node.name.includes('Clothes')
+                    ) {
+                        node.material.color.setStyle(
+                            materials.outfitColor || '#1a5490'
+                        );
+                    }
+
+                    // Enhance material quality
+                    if (node.material) {
+                        node.material.roughness = 0.7;
+                        node.material.metalness = 0.1;
+                    }
+                });
+            }
+
+            extractMorphTargets() {
+                this.model.traverse((node) => {
+                    if (!node.isMesh) return;
+
+                    if (
+                        node.morphTargetDictionary &&
+                        node.morphTargetInfluences
+                    ) {
+                        Object.entries(node.morphTargetDictionary).forEach(
+                            ([name, index]) => {
+                                this.morphTargets[name] = {
+                                    mesh: node,
+                                    index,
+                                };
+                            }
+                        );
+                    }
+                });
+            }
+
+            setMorphTarget(name, intensity) {
+                const target = this.morphTargets[name];
+                if (target) {
+                    target.mesh.morphTargetInfluences[target.index] =
+                        THREE.MathUtils.clamp(intensity, 0, 1);
+                }
+            }
+
+            speak(text) {
+                document.getElementById('speakingIndicator').classList.add('active');
+                this.playAnimation('talk');
+                this.animateLipSync(text);
+
+                // Stop speaking indicator after estimated duration
+                const duration = Math.max(2000, text.length * 50);
+                setTimeout(() => {
+                    document.getElementById('speakingIndicator').classList.remove('active');
+                    this.playAnimation('idle');
+                }, duration);
+            }
+
+            animateLipSync(text) {
+                const visemes = this.extractVisemes(text);
+                let delay = 0;
+
+                visemes.forEach((viseme) => {
+                    setTimeout(() => {
+                        if (this.morphTargets[`viseme_${viseme}`]) {
+                            this.setMorphTarget(`viseme_${viseme}`, 0.8);
+                        } else {
+                            // Fallback: scale mouth
+                            this.scaleHeadBob(0.5);
+                        }
+                    }, delay);
+
+                    setTimeout(() => {
+                        this.setMorphTarget(`viseme_${viseme}`, 0);
+                    }, delay + 100);
+
+                    delay += 150;
+                });
+            }
+
+            extractVisemes(text) {
+                const visemeMap = {
+                    a: 'aa',
+                    e: 'E',
+                    i: 'IH',
+                    o: 'OH',
+                    u: 'OO',
+                    b: 'M',
+                    p: 'M',
+                    m: 'M',
+                    f: 'F',
+                    v: 'F',
+                    s: 'S',
+                    z: 'Z',
+                };
+
+                return text
+                    .toLowerCase()
+                    .split('')
+                    .map((c) => visemeMap[c] || 'neutral');
+            }
+
+            scaleHeadBob(intensity) {
+                if (this.model) {
+                    const originalScale = 1;
+                    this.model.scale.y = originalScale + intensity * 0.1;
+                }
+            }
+
+            playAnimation(name) {
+                if (!this.actions[name]) return;
+
+                if (this.currentAction) {
+                    this.currentAction.stop();
+                }
+
+                this.currentAction = this.actions[name];
+                this.currentAction.reset();
+                this.currentAction.timeScale = CONFIG.animationSpeed;
+                this.currentAction.play();
+            }
+
+            gesture(name) {
+                switch (name) {
+                    case 'wave':
+                        this.playAnimation('wave');
+                        break;
+                    case 'nod':
+                        this.playAnimation('nod');
+                        break;
+                    case 'thumbsup':
+                        this.playAnimation('thumbsup');
+                        break;
+                    case 'idle':
+                        this.playAnimation('idle');
+                        break;
+                }
+            }
+
+            updateStats() {
+                let vertices = 0,
+                    triangles = 0;
+
+                this.model.traverse((node) => {
+                    if (node.isMesh) {
+                        vertices += node.geometry.attributes.position.count;
+                        triangles += node.geometry.index.count / 3;
+                    }
+                });
+
+                this.stats.vertices = vertices.toLocaleString();
+                this.stats.triangles = Math.floor(triangles).toLocaleString();
+            }
+
+            updateHUD() {
+                document.getElementById('fps').textContent = Math.round(
+                    this.stats.fps
+                );
+                document.getElementById('vertices').textContent =
+                    this.stats.vertices;
+                document.getElementById('triangles').textContent =
+                    this.stats.triangles;
+
+                if (performance.memory) {
+                    const used = Math.round(
+                        performance.memory.usedJSHeapSize / 1048576
+                    );
+                    document.getElementById('memory').textContent = `${used} MB`;
+                }
+            }
+
+            setupEventListeners() {
+                window.addEventListener('resize', () => this.onWindowResize());
+                window.addEventListener('message', (e) =>
+                    this.handleMessage(e.data)
+                );
+
+                // Support for URL parameter updates
+                if (window.opener) {
+                    window.addEventListener('hashchange', () => {
+                        const newProfile = this.parseProfile();
+                        this.profile = newProfile;
+                        if (this.model) {
+                            this.applyCustomization();
+                        }
+                    });
+                }
+            }
+
+            handleMessage(data) {
+                if (data.type === 'speak') {
+                    this.speak(data.text);
+                } else if (data.type === 'gesture') {
+                    this.gesture(data.name);
+                } else if (data.type === 'updateProfile') {
+                    this.profile = data.profile;
+                    if (this.model) {
+                        this.applyCustomization();
+                    }
+                }
+            }
+
+            onWindowResize() {
+                const width = window.innerWidth;
+                const height = window.innerHeight;
+
+                this.camera.aspect = width / height;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(width, height);
+            }
+
+            showError(message) {
+                const loading = document.getElementById('loading');
+                loading.innerHTML = `<p style="color: #ef4444;">${message}</p>`;
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+
+                const deltaTime = this.clock.getDelta();
+                if (this.mixer) {
+                    this.mixer.update(deltaTime);
+                }
+
+                // Subtle idle head bob
+                if (this.currentAction?.name === 'idle' && this.model) {
+                    this.headBobPhase += deltaTime * 2;
+                    this.model.position.y = Math.sin(this.headBobPhase) * 0.05;
+                }
+
+                // Rotate model slightly
+                if (this.model) {
+                    this.model.rotation.y += deltaTime * 0.3;
+                }
+
+                this.renderer.render(this.scene, this.camera);
+
+                // Update FPS counter
+                this.frameCount++;
+                const now = performance.now();
+                if (now >= this.fpsUpdateTime + 1000) {
+                    this.stats.fps = this.frameCount;
+                    this.frameCount = 0;
+                    this.fpsUpdateTime = now;
+                    this.updateHUD();
+                }
+            }
+        }
+
+        // Initialize viewer on page load
+        window.addEventListener('load', () => {
+            window.viewer = new AvatarViewer();
+        });
+
+        // Expose global functions for button clicks
+        window.gesture = (name) => {
+            if (window.viewer) window.viewer.gesture(name);
+        };
+
+        window.speak = (text) => {
+            if (window.viewer) window.viewer.speak(text);
+        };
+    </script>
+</body>
+</html>
