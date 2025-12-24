@@ -155,7 +155,7 @@ const BottomNav = ({ state, navigation }) => {
       name: 'Home',
       icon: (
         <Svg width={24} height={24} viewBox="0 0 256 256"
-             fill={activeTab === 'Home' ? BLUE : INACTIVE_ICON}>
+          fill={activeTab === 'Home' ? BLUE : INACTIVE_ICON}>
           <Path d="M218.83,103.77l-80-75.48a1.14,1.14,0,0,1-.11-.11,16,16,0,0,0-21.53,0l-.11.11L37.17,103.77A16,16,0,0,0,32,115.55V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V160h32v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V115.55A16,16,0,0,0,218.83,103.77Z" />
         </Svg>
       ),
@@ -165,7 +165,7 @@ const BottomNav = ({ state, navigation }) => {
       name: 'Chat',
       icon: (
         <Svg width={24} height={24} viewBox="0 0 256 256"
-             fill={activeTab === 'Chat' ? BLUE : INACTIVE_ICON}>
+          fill={activeTab === 'Chat' ? BLUE : INACTIVE_ICON}>
           <Path d="M140,128a12,12,0,1,1-12-12A12,12,0,0,1,140,128ZM84,116a12,12,0,1,0,12,12A12,12,0,0,0,84,116Zm88,0a12,12,0,1,0,12,12A12,12,0,0,0,172,116Z" />
         </Svg>
       ),
@@ -175,7 +175,7 @@ const BottomNav = ({ state, navigation }) => {
       name: 'Journal',
       icon: (
         <Svg width={24} height={24} viewBox="0 0 256 256"
-             fill={activeTab === 'Journal' ? BLUE : INACTIVE_ICON}>
+          fill={activeTab === 'Journal' ? BLUE : INACTIVE_ICON}>
           <Path d="M240,64V192a16,16,0,0,1-16,16H160a24,24,0,0,0-24,24,8,8,0,0,1-16,0,24,24,0,0,0-24-24H32a16,16,0,0,1-16-16V64A16,16,0,0,1,32,48H88a32,32,0,0,1,32,32v88a8,8,0,0,0,16,0V80a32,32,0,0,1,32-32h56A16,16,0,0,1,240,64Z" />
         </Svg>
       ),
@@ -185,7 +185,7 @@ const BottomNav = ({ state, navigation }) => {
       name: 'Tools',
       icon: (
         <Svg width={24} height={24} viewBox="0 0 256 256"
-             fill={activeTab === 'Tools' ? BLUE : INACTIVE_ICON}>
+          fill={activeTab === 'Tools' ? BLUE : INACTIVE_ICON}>
           <Path d="M226.76,69a8,8,0,0,0-12.84-2.88l-40.3,37.19-17.23-3.7-3.7-17.23,37.19-40.3A8,8,0,0,0,187,29.24,72,72,0,0,0,88,96,72.34,72.34,0,0,0,94,124.94L33.79,177a32,32,0,0,0,45.26,45.26L131.06,162A72,72,0,0,0,232,96,71.56,71.56,0,0,0,226.76,69Z" />
         </Svg>
       ),
@@ -195,7 +195,7 @@ const BottomNav = ({ state, navigation }) => {
       name: 'Profile',
       icon: (
         <Svg width={24} height={24} viewBox="0 0 256 256"
-             fill={activeTab === 'Profile' ? BLUE : INACTIVE_ICON}>
+          fill={activeTab === 'Profile' ? BLUE : INACTIVE_ICON}>
           <Path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8Z" />
         </Svg>
       ),
@@ -205,11 +205,31 @@ const BottomNav = ({ state, navigation }) => {
       name: 'Relax',
       icon: (
         <Svg width={24} height={24} viewBox="0 0 256 256"
-             fill={activeTab === 'Relax' ? BLUE : INACTIVE_ICON}>
+          fill={activeTab === 'Relax' ? BLUE : INACTIVE_ICON}>
           <Path d="M200 32v136a40 40 0 1 1-24-37.32V72h-40v96a40 40 0 1 1-24-37.32V32z" />
         </Svg>
       ),
       label: 'Relax',
+    },
+    {
+      name: 'MealPlanner',
+      icon: (
+        <Svg width={24} height={24} viewBox="0 0 256 256"
+          fill={activeTab === 'MealPlanner' ? BLUE : INACTIVE_ICON}>
+          <Path d="M216,112H40a16,16,0,0,0-16,16V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V128A16,16,0,0,0,216,112Zm0,88H40V128H216V200ZM88,80h80a8,8,0,0,0,0-16H88a8,8,0,0,0,0,16Zm24-32h32a8,8,0,0,0,0-16H112a8,8,0,0,0,0,16Z" />
+        </Svg>
+      ),
+      label: 'Meals',
+    },
+    {
+      name: 'Exercise',
+      icon: (
+        <Svg width={24} height={24} viewBox="0 0 256 256"
+          fill={activeTab === 'Exercise' ? '#ccff00' : INACTIVE_ICON}>
+          <Path d="M208,104a8,8,0,0,1-8,8H158.62l-18.4,55.19a16,16,0,0,1-29.35,3.31L81,119.26l-3.32,16.6A16,16,0,0,1,62,148.81l-14,.24A8,8,0,0,1,48,133l13.79-.24.78-3.89A8,8,0,0,1,72.23,124.7l26.29,43.83,30.34-91a16.06,16.06,0,0,1,30.41,0l11.45,34.42H200A8,8,0,0,1,208,104Z" />
+        </Svg>
+      ),
+      label: 'Fitness',
     },
 
     // ⭐ NEW AVATAR TAB
@@ -219,7 +239,7 @@ const BottomNav = ({ state, navigation }) => {
       url: 'exp://1nlzobk-thenameismad-8082.exp.direct',
       icon: (
         <Svg width={24} height={24} viewBox="0 0 256 256"
-             fill={activeTab === 'Avatar' ? BLUE : INACTIVE_ICON}>
+          fill={activeTab === 'Avatar' ? BLUE : INACTIVE_ICON}>
           <Path d="M128 24A104 104 0 1 0 232 128 104.12 104.12 0 0 0 128 24Zm0 192a88 88 0 1 1 88-88 88.1 88.1 0 0 1-88 88Zm8-132h-8a4 4 0 0 0-4 4v48a4 4 0 0 0 4 4h8a4 4 0 0 0 4-4V88a4 4 0 0 0-4-4Zm-4 72a12 12 0 1 0 12 12 12 12 0 0 0-12-12Z" />
         </Svg>
       ),

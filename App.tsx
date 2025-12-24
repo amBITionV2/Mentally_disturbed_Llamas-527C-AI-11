@@ -99,6 +99,7 @@ import WellnessScreen from './src/screens/WellnessScree';
 import BottomNav from './src/components/BottomNav';
 import MusicThemesScreen from './src/screens/MusicScreen';
 import TimerSliderScreen from './src/screens/SongPage';
+import MealPlannerScreen from './src/screens/MealPlannerScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -127,26 +128,39 @@ function TabNavigator() {
   );
 }
 
+import { ThemeProvider } from './src/context/ThemeContext';
+import MealGoalScreen from './src/screens/MealGoalScreen';
+import MealDetailScreen from './src/screens/MealDetailScreen';
+import ExerciseScreen from './src/screens/ExerciseScreen';
+
+// ... (other imports)
+
 function App() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="Onboarding">
+    <ThemeProvider>
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName="Onboarding">
 
-        <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Tabs" component={TabNavigator} options={{ headerShown: false }} />
+          <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="Tabs" component={TabNavigator} options={{ headerShown: false }} />
 
-        {/* Add Avatar screen here */}
-        <Stack.Screen name="Avatar" component={AvatarScreen} options={{ headerShown: false }} />
+          {/* Add Avatar screen here */}
+          <Stack.Screen name="Avatar" component={AvatarScreen} options={{ headerShown: false }} />
 
-        {/* Other screens */}
-        <Stack.Screen name="MoodCheck" component={MoodCheckScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Wellness" component={WellnessScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Relax" component={MusicThemesScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Song" component={TimerSliderScreen} options={{ headerShown: false }} />
+          {/* Other screens */}
+          <Stack.Screen name="MoodCheck" component={MoodCheckScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="Wellness" component={WellnessScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="Relax" component={MusicThemesScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="Song" component={TimerSliderScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="MealPlanner" component={MealPlannerScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="MealGoal" component={MealGoalScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="MealDetail" component={MealDetailScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="Exercise" component={ExerciseScreen} options={{ headerShown: false }} />
 
-      </Stack.Navigator>
-    </NavigationContainer>
+        </Stack.Navigator>
+      </NavigationContainer>
+    </ThemeProvider>
   );
 }
 
