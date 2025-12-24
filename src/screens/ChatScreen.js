@@ -316,7 +316,7 @@ const ChatScreen = () => {
     setMessages(prev => [...prev, userMessage]);
 
     try {
-      const response = await fetch('https://fbbc8b08f380.ngrok-free.app/therapist', {
+      const response = await fetch('https://aeb01114089b.ngrok-free.app/therapist', {
         method: 'POST',
         headers: {
           'accept': 'application/json',
@@ -460,7 +460,7 @@ const ChatScreen = () => {
         <View style={styles.glowBorder}>
           <WebView
             ref={avatarWebViewRef}
-            source={{ uri: 'http://192.168.1.41:5173/' }}
+            source={{ uri: 'http://10.242.171.144:5173/' }}
             style={styles.webView}
             javaScriptEnabled={true}
             domStorageEnabled={true}
